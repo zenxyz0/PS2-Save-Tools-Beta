@@ -1,0 +1,72 @@
+name: Bug report
+description: Something broke while converting, reading, or copying saves
+title: "[Bug] "
+labels: ["bug", "beta"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing the beta. Back up your memory cards before overwriting them.
+        Do not attach files that contain personal data.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where did it happen?
+      options:
+        - Converter
+        - Reader
+        - Copy Between Cards
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: Save or card format
+      options:
+        - .cbs
+        - .psu
+        - .xps
+        - .max
+        - Memory card (.ps2 / .bin)
+        - Not applicable
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Card size
+      options:
+        - 8 MB
+        - 16 MB
+        - 32 MB
+        - 64 MB
+        - Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do?
+      placeholder: "1. Chose ...\n2. Clicked ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+  - type: textarea
+    id: error
+    attributes:
+      label: Exact error message
+      description: Copy the red message shown on the page, if any.
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 130
+  - type: input
+    id: target
+    attributes:
+      label: Where did you use the card?
+      description: PCSX2 version, real PS2, or not used yet.
