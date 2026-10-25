@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PS2 Save Tools</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<style>
+:root{--bg:#f3f4fa;--fg:#161826;--mut:#62667d;--card:rgba(255,255,255,.75);--bd:rgba(40,50,110,.16);--ac:#3b5bff;--ac2:#9b4dff;--acfg:#fff;--err:#c62828;--ok:#1b7a43;--hd:rgba(243,244,250,.82);--g1:rgba(59,91,255,.18);--g2:rgba(155,77,255,.16);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0c16;--fg:#eceefb;--mut:#9a9eb8;--card:rgba(30,32,56,.7);--bd:rgba(130,140,255,.2);--ac:#6f8cff;--ac2:#b07aff;--acfg:#0b0c16;--err:#ff8a80;--ok:#6fd49a;--hd:rgba(11,12,22,.8);--g1:rgba(80,110,255,.22);--g2:rgba(160,90,255,.18)}}
+:root[data-theme="dark"]{--bg:#0b0c16;--fg:#eceefb;--mut:#9a9eb8;--card:rgba(30,32,56,.7);--bd:rgba(130,140,255,.2);--ac:#6f8cff;--ac2:#b07aff;--acfg:#0b0c16;--err:#ff8a80;--ok:#6fd49a;--hd:rgba(11,12,22,.8);--g1:rgba(80,110,255,.22);--g2:rgba(160,90,255,.18)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(900px 500px at 10% -10%,var(--g1),transparent 60%),radial-gradient(800px 500px at 100% 0,var(--g2),transparent 60%),var(--bg);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--hd);z-index:30}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--hd);backdrop-filter:blur(14px);border-bottom:1px solid var(--bd)}
+#burger{width:42px;height:42px;border-radius:12px;border:1px solid var(--bd);background:var(--card);display:grid;place-content:center;gap:5px;padding:0;cursor:pointer}
+#burger i{display:block;width:20px;height:2px;border-radius:2px;background:var(--fg);transition:.25s}
+#burger.o i:nth-child(1){transform:translateY(7px) rotate(45deg)}#burger.o i:nth-child(2){opacity:0}#burger.o i:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.brand{font-weight:700;letter-spacing:.2px}.brand b{background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.pill{margin-left:auto;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--bd);color:var(--mut)}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;z-index:40}#ov.o{opacity:1;pointer-events:auto}
+#dr{position:fixed;top:0;bottom:0;left:0;width:min(300px,84vw);z-index:50;background:var(--bg);border-right:1px solid var(--bd);padding:calc(18px + env(safe-area-inset-top,0px)) 14px 18px;transform:translateX(-102%);transition:transform .28s ease}
+#dr.o{transform:none}#dr h2{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin:6px 8px 12px}
+#dr a{display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px;color:var(--fg);text-decoration:none;border:1px solid transparent;margin-bottom:6px}
+#dr a span{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:var(--card);border:1px solid var(--bd)}
+#dr a small{display:block;color:var(--mut);font-size:13px}#dr a.on{border-color:var(--ac);background:linear-gradient(135deg,var(--g1),var(--g2))}
+main{max-width:700px;margin:0 auto;padding:26px 18px 48px}.view{display:none;animation:in .35s ease}.view.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:26px;line-height:1.2;margin:0 0 6px}h1 em{font-style:normal;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+p{margin:0 0 18px;color:var(--mut)}
+.drop{display:block;border:1.5px dashed var(--ac);border-radius:18px;background:var(--card);backdrop-filter:blur(8px);padding:30px 16px;text-align:center;cursor:pointer;transition:.2s}
+.drop:hover{transform:translateY(-2px);box-shadow:0 10px 30px var(--g1)}.drop svg{width:54px;height:54px;color:var(--ac);display:block;margin:0 auto 8px}
+.drop b{color:var(--ac)}.drop input{display:none}
+ul{list-style:none;padding:0;margin:16px 0}
+li,details{background:var(--card);border:1px solid var(--bd);border-radius:14px;backdrop-filter:blur(8px);overflow-wrap:anywhere}
+li{padding:11px 15px;margin-bottom:8px}li small,summary small{display:block;color:var(--mut);font-size:13px}
+details{margin-bottom:8px}summary{padding:12px 15px;cursor:pointer}
+.f{padding:0 15px 12px}.f div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid var(--bd);font-size:14px}.f span:last-child{color:var(--mut);white-space:nowrap}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button.p,button.s{font:inherit;border-radius:12px;padding:12px 20px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer}
+button.p{background:linear-gradient(135deg,var(--ac),var(--ac2));color:var(--acfg);border:0;font-weight:700}
+button:disabled{opacity:.4;cursor:not-allowed}
+.msg,#c-m{margin-top:14px;min-height:1.5em}.e{color:var(--err)}.o{color:var(--ok)}
+.sum{margin:16px 0 10px;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,var(--g1),var(--g2));color:var(--fg);font-size:14px}.sum:empty{display:none}
+.n{font-size:13px;color:var(--mut);margin-top:22px;border-top:1px solid var(--bd);padding-top:14px}
+.sv{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}.sv details{flex:1;margin:0;min-width:0}.sv input{width:20px;height:20px;margin-top:13px;accent-color:var(--ac);flex:none}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.bar .chk{display:flex;align-items:center;gap:8px;margin-right:auto}.bar input{width:20px;height:20px;accent-color:var(--ac)}
+button.dg{background:linear-gradient(135deg,#e53935,#ff7043);color:#fff}
+.dl{display:none;margin:0 0 14px;padding:12px 14px;border-radius:12px;border:1px solid var(--ok);background:var(--card)}.dl:not(:empty){display:block}.dl button{margin-top:10px}
+.ic{width:42px;height:42px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer;font-size:18px;padding:0}
+.drop.hv{box-shadow:0 0 0 3px var(--ac),0 10px 30px var(--g1);transform:scale(1.01)}
+.base{display:inline-block;margin:0 0 10px;padding:9px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--card);cursor:pointer;font-size:14px}.base input{display:none}
+.mut{color:var(--mut);font-size:14px;margin:0 0 12px}.mut:empty{display:none}
+.tools{display:none;gap:10px;margin:0 0 12px}.tools input,.tools select{font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);min-width:0}.tools input{flex:1}
+.cap{display:none;height:8px;border-radius:99px;background:var(--bd);overflow:hidden;margin:0 0 14px}.cap i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.th{width:52px;height:52px;flex:none;border-radius:12px;border:1px solid var(--bd);background:var(--card);display:grid;place-items:center;font-size:22px;margin-top:2px}canvas.th{display:block}
+.xb{margin:8px 0 4px;padding:8px 14px!important;font-size:14px}.dl .row{margin-top:10px}
+.cr{display:flex;gap:16px;align-items:center;padding:18px;margin-bottom:12px;border:1px solid var(--bd);border-radius:18px;background:var(--card);backdrop-filter:blur(8px)}
+.cr small{display:block;color:var(--mut);font-size:12px;letter-spacing:1.4px;text-transform:uppercase}.cr b{display:block;font-size:20px}.cr span{color:var(--mut);font-size:14px}
+.av{flex:none;width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:26px;font-weight:800;color:var(--acfg);background:linear-gradient(135deg,var(--ac),var(--ac2))}.av.b{background:linear-gradient(135deg,var(--ac2),#ff7043)}
+.seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 6px}.seg button{font:inherit;font-size:14px;white-space:nowrap;min-width:0;padding:9px 0;border-radius:99px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer}.seg button.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:var(--acfg);border-color:transparent;font-weight:700}
+.pn{padding:14px;border:1px solid var(--bd);border-radius:16px;background:var(--card);margin-bottom:12px}.pn h3{margin:0 0 10px;font-size:16px}.pn .row{align-items:center;margin-bottom:8px}
+.pn select{font:inherit;padding:9px 10px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}.pn>button{margin-top:10px}
+.srow{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--bd);overflow-wrap:anywhere;cursor:pointer}.srow input{width:20px;height:20px;accent-color:var(--ac);flex:none}.srow small{display:block;color:var(--mut);font-size:12px}
+.ops{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}.ops button{padding:10px 6px;font:inherit;font-size:14px;border-radius:12px;border:1px solid var(--bd);cursor:pointer;background:var(--card);color:var(--fg)}.ops .p{background:linear-gradient(135deg,var(--ac),var(--ac2));color:var(--acfg);border:0;font-weight:700}
+.beta{font-size:10px;font-weight:800;letter-spacing:1px;padding:3px 8px;border-radius:99px;background:linear-gradient(135deg,#ff9800,#ff5722);color:#fff}
+.warn{margin:0 0 18px;padding:10px 14px;border-radius:12px;border:1px solid #ff9800;background:var(--card);font-size:14px;color:var(--fg)}
+li.csv{display:flex;align-items:center;gap:10px}.csv input,.cbar input{width:20px;height:20px;accent-color:var(--ac);flex:none}
+li.cbar{background:transparent;border:0;padding:0 4px;margin-bottom:6px}.cbar label{cursor:pointer}
+.warn a,a.rp{color:var(--ac)}
+</style></head><body>
+<header class="top"><button id="burger" aria-label="Open menu" aria-expanded="false"><i></i><i></i><i></i></button><div class="brand"><b>PS2</b> Save Tools</div><span class="beta">BETA</span><span class="pill" id="ttl"></span></header>
+<div id="ov"></div>
+<nav id="dr"><h2>Menu</h2>
+<a href="#konversi" data-v="konversi"><span>⇄</span><div><b>Converter</b><small>.cbs/.psu/.xps/.max → Mcd001.ps2</small></div></a>
+<a href="#baca" data-v="baca"><span>💾</span><div><b>Reader</b><small>View Mcd001.ps2 contents</small></div></a>
+<a href="#salin" data-v="salin"><span>🔁</span><div><b>Copy Between Cards</b><small>Copy or move saves</small></div></a>
+<a href="#kredit" data-v="kredit"><span>✨</span><div><b>Credits</b><small>Authors and thanks</small></div></a></nav>
+<main>
+<div class="warn"><b>Beta.</b> Tested with synthetic data only; not yet verified on every real save or card size in PCSX2. Back up your memory cards before overwriting them.<br>Problem or idea? <a href="https://github.com/zenxyz0/PS2-Save-Tools-Beta/issues/new?template=bug_report.yml" target="_blank" rel="noopener">Report a bug</a> · <a href="https://github.com/zenxyz0/PS2-Save-Tools-Beta/issues/new?template=feature_request.yml" target="_blank" rel="noopener">Request a feature</a></div>
+<section class="view" id="v-konversi"><h1>Convert saves to <em>Mcd001.ps2</em></h1>
+<p>Turn .cbs, .psu, .xps, and .max saves into a ready-to-use PS2 memory card (8, 16, 32, or 64 MB) for PCSX2.</p>
+<label class="drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/></svg><b>Choose save files</b><br>.cbs / .psu / .xps / .max, multiple allowed, or drag them here<input id="c-f" type="file" accept=".cbs,.psu,.xps,.max" multiple></label>
+<ul id="c-l"></ul>
+<label class="base">➕ Add to an existing card (optional)<input id="c-b" type="file"></label>
+<div id="c-bi" class="mut"></div>
+<ul id="c-bl"></ul>
+<div class="mut" style="margin:0 0 6px">Card size</div><div class="seg" id="c-sz" role="group" aria-label="Card size"><button type="button" data-mb="8" class="on">8 MB</button><button type="button" data-mb="16">16 MB</button><button type="button" data-mb="32">32 MB</button><button type="button" data-mb="64">64 MB</button></div>
+<div class="mut" style="margin-top:6px">A real PS2 only recognizes 8 MB. 16/32/64 MB are for PCSX2 and devices that support them. Bigger cards use more browser memory.</div>
+<div class="row"><button class="p" id="c-go" disabled>Create Mcd001.ps2</button><button class="s" id="c-rs" disabled>Clear</button></div>
+<div id="c-m" class="msg"></div><div id="c-o"></div>
+<div class="n">Everything runs in your browser; no files are uploaded. After the card is built, the page reads it back to verify it, then you can download <b>Mcd001.zip</b> (containing Mcd001.ps2, because the hosted preview cannot save the .ps2 extension directly; the standalone file saves a plain .ps2) or open it straight in the Reader. If you choose an existing card, its contents are kept and saves with the same folder name are replaced. .max files are read with LZARI decompression. Back up your old card before overwriting it.</div></section>
+<section class="view" id="v-baca"><h1>Read contents of <em>Mcd001.ps2</em></h1>
+<p>Browse the saves, titles, dates, and files inside a memory card. Search, sort, export to .psu, or delete.</p>
+<label class="drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/></svg><b>Choose Mcd001.ps2</b><br>or .bin<input id="r-f" type="file"></label>
+<div id="r-m" class="msg e"></div><div id="r-s" class="sum"></div><div class="cap" id="r-c"><i></i></div><div id="r-d" class="dl"></div><div class="tools" id="r-t"><input id="r-q" type="search" placeholder="Search saves…" aria-label="Search saves"><select id="r-o" aria-label="Sort by"><option value="n">Sort: Name</option><option value="d">Sort: Date</option><option value="s">Sort: Size</option></select></div><div id="r-l"></div>
+<div class="n">Everything runs in your browser: nothing is uploaded and your original file is not changed. Tick saves and delete them; the change only counts after you download the modified card and overwrite the old file, so back up first. It accepts PS2 memory cards in .ps2 or .bin format, with or without ECC, including output from the Converter. Save titles are taken from the file <b>icon.sys</b> in each save folder, so some saves only show their folder name. The <b>PS1</b> tag marks a PlayStation 1 save. Click a save to see the files inside it. If an error appears, the file is usually not a PS2 memory card or its size does not match the card header.</div></section>
+<section class="view" id="v-salin"><h1>Copy <em>between cards</em></h1>
+<p>Load two cards, tick saves, then copy or move them from one to the other.</p>
+<div class="pn"><h3>Card A</h3>
+<div class="row"><label class="base" style="margin:0">📂 Choose card<input id="s-fa" type="file"></label><select id="s-za" aria-label="Empty card size"><option value="8">8 MB</option><option value="16">16 MB</option><option value="32">32 MB</option><option value="64">64 MB</option></select><button class="s" id="s-ka">Create empty</button></div>
+<div class="mut" id="s-sa">No card loaded.</div><div id="s-la"></div>
+<button class="s" id="s-da">⬇ Download Card A</button></div>
+<div class="ops"><button class="p" id="s-ab">Copy A → B</button><button class="p" id="s-ba">Copy B → A</button><button class="s" id="s-mab">Move A → B</button><button class="s" id="s-mba">Move B → A</button></div>
+<div class="pn"><h3>Card B</h3>
+<div class="row"><label class="base" style="margin:0">📂 Choose card<input id="s-fb" type="file"></label><select id="s-zb" aria-label="Empty card size"><option value="8">8 MB</option><option value="16">16 MB</option><option value="32">32 MB</option><option value="64">64 MB</option></select><button class="s" id="s-kb">Create empty</button></div>
+<div class="mut" id="s-sb">No card loaded.</div><div id="s-lb"></div>
+<button class="s" id="s-db">⬇ Download Card B</button></div>
+<div id="s-m" class="msg"></div>
+<div class="n">The destination card is rebuilt with its old contents plus the selected saves; saves with the same folder name are replaced. Changes only count after you download the card, so your original file stays safe. Save folder names cannot be changed here because games look saves up by that name. To split a large card, create an empty card B and move some saves into it.</div></section>
+<section class="view" id="v-kredit"><h1>Made with <em>passion</em></h1>
+<p>Two small tools for moving, reading, and tidying PS2 game saves. Version 0.1.0-beta.</p>
+<div class="cr"><div class="av">Z</div><div><small>Creator</small><b>Zen</b><span>Had the idea, set the direction, and made every decision behind this website.</span></div></div>
+<div class="cr"><div class="av b">C</div><div><small>Assistant</small><b>Claude.ai</b><span>Wrote the code, tested it, and worked with Zen from start to finish.</span></div></div>
+<div class="n">Source code: <a href="https://github.com/zenxyz0/PS2-Save-Tools-Beta" target="_blank" rel="noopener" style="color:var(--ac)">github.com/zenxyz0/PS2-Save-Tools-Beta</a>. Thanks also to <b>mymc</b> by Ross Ridge (public domain), the format reference; the save format documentation from the <b>Apollo</b> project; and the <b>pako</b> library for zlib. Everything runs in your browser; no files are uploaded.</div></section>
+</main>
+<script>
+(()=>{
+
+const CL=1024,PG=528,NP=16384,AO=41,NA=8135,enc=new TextEncoder();
+const S=Uint8Array.from("5f1f856f31aa3b1821b9ce1c074c9cb481b8ef9859aef926e380a3292d7351627c6446f4341af6e1ba3a0d82790a5c1671498eac8c9f351945943f560c91000bd7b0dd3966a176521357f3bb4ee5dcf06584b2d6df153c631d8914bdd236feb1ca8ba4c69e674737426d6a039270057d962f4090c4f13e3d01f7681ec3fc72b554cfe741e44d835512220978fadea7060823bf0fccc19761c54ae6a011c2ea740287d5d19db77e386053958d2577105e9b7fd86edaa22e204fcd8fcbbe5ae0ed2c9ad4e2afd0a9e8ad7abca8f2eeebf5a69928246c2b755df8d38617fbc07bb358dbc74bff0450e98869c92aabfd5b1b8ad9ec27440e33c86b933248b63043a5".replace(/ /g,"").match(/../g).map(h=>parseInt(h,16)));
+const $=i=>document.getElementById(i);let saves=[];
+const zt=b=>{const i=b.indexOf(0);return b.slice(0,i<0?b.length:i)};
+const lat=b=>Array.from(b,c=>String.fromCharCode(c)).join("");
+const d0=new Date(),NOW=Uint8Array.of(0,d0.getSeconds(),d0.getMinutes(),d0.getHours(),d0.getDate(),d0.getMonth()+1,d0.getFullYear()&255,d0.getFullYear()>>8);
+const fixT=t=>t.every(x=>!x)?NOW:t;
+function rc4(t){const s=Uint8Array.from(S);let j=0;for(let k=0;k<t.length;k++){const i=(k+1)&255;j=(j+s[i])&255;[s[i],s[j]]=[s[j],s[i]];t[k]^=s[(s[i]+s[j])&255]}}
+function parseCBS(buf){
+ const u=new Uint8Array(buf),v=new DataView(buf);
+ if(u.length<130||lat(u.subarray(0,3))!=="CFU"||u[3])throw new Error("Not a valid CodeBreaker .cbs file");
+ const hl=v.getUint32(8,true),dl=v.getUint32(12,true);
+ if(hl<124||hl>=u.length)throw new Error("Corrupt .cbs header");
+ let mode=v.getUint32(76,true);if(!(mode&0x20))mode=0x8427;
+ const body=u.slice(hl);rc4(body);
+ const inf=new pako.Inflate();inf.push(body,true);
+ if(!inf.result)throw new Error("Decompression failed: "+(inf.msg||"corrupt data"));
+ const o=inf.result.subarray(0,dl),ov=new DataView(o.buffer,o.byteOffset,o.byteLength),files=[];
+ for(let p=0;p<o.length;){
+  if(o.length-p<64)throw new Error("Save data is truncated");
+  const sz=ov.getUint32(p+16,true),fm=ov.getUint16(p+20,true),data=o.slice(p+64,p+64+sz);
+  if(data.length!==sz)throw new Error("Save data is truncated");
+  files.push({name:zt(o.slice(p+32,p+64)),mode:(fm&0x10)?fm:0x8417,created:fixT(o.slice(p,p+8)),modified:fixT(o.slice(p+8,p+16)),data});
+  p+=64+sz}
+ return{name:zt(u.slice(20,52)),mode,created:fixT(u.slice(52,60)),modified:fixT(u.slice(60,68)),files}}
+function dent(u,o){const v=new DataView(u.buffer,u.byteOffset+o,512);return{mode:v.getUint32(0,true),len:v.getUint32(4,true),cr:u.slice(o+8,o+16),mo:u.slice(o+24,o+32),name:zt(u.slice(o+64,o+96))}}
+function parsePSU(buf){
+ const u=new Uint8Array(buf);if(u.length<1536)throw new Error("File is too small to be a .psu");
+ const d=dent(u,0),a=dent(u,512),b=dent(u,1024);
+ if(!(d.mode&0x20)||!(a.mode&0x20)||!(b.mode&0x20)||lat(a.name)!=="."||lat(b.name)!=="..")throw new Error("Not a valid .psu file");
+ let p=1536;const files=[];
+ for(let i=0;i<d.len-2;i++){
+  if(p+512>u.length)throw new Error(".psu file is truncated");
+  const f=dent(u,p);p+=512;const data=u.slice(p,p+f.len);if(data.length!==f.len)throw new Error(".psu file is truncated");
+  p+=Math.ceil(f.len/1024)*1024;files.push({name:f.name,mode:(f.mode&0x10)?f.mode:0x8417,created:fixT(f.cr),modified:fixT(f.mo),data})}
+ return{name:d.name,mode:d.mode,created:fixT(d.cr),modified:fixT(d.mo),files}}
+function parseXPS(buf){
+ const u=new Uint8Array(buf),v=new DataView(buf);let p=21;
+ for(let i=0;i<3;i++)p+=4+v.getUint32(p,true);
+ p+=4;
+ const hdr=()=>{const hl=v.getUint16(p,true),m=v.getUint16(p+78,true),h={nm:zt(u.slice(p+2,p+66)),len:v.getUint32(p+66,true),mode:((m>>8)&255)|((m&255)<<8),cr:u.slice(p+82,p+90),mo:u.slice(p+90,p+98)};p+=Math.max(hl,98);return h};
+ const d=hdr();let n=d.len-2;if(!(d.mode&0x20)||n<0)throw new Error("Corrupt .xps header");
+ const files=[];
+ while(n-->0){const h=hdr(),data=u.slice(p,p+h.len);if(data.length!==h.len)throw new Error(".xps file is truncated");p+=h.len;
+  files.push({name:h.nm,mode:(h.mode&0x10)?h.mode:0x8417,created:fixT(h.cr),modified:fixT(h.mo),data})}
+ return{name:d.nm,mode:d.mode,created:fixT(d.cr),modified:fixT(d.mo),files}}
+function lzari(src,length){
+ const N=4096,F=60,TH=2,NC=256-TH+F,Q1=1<<15,Q2=2*Q1,Q3=3*Q1,Q4=4*Q1,MAXC=Q1-1;
+ const c2s=new Int32Array(NC),s2c=new Int32Array(NC+1),sf=new Uint32Array(NC+1),sc=new Uint32Array(NC+1),pc=new Uint32Array(N+1);
+ for(let y=NC;y>=1;y--){c2s[y-1]=y;s2c[y]=y-1;sf[y]=1;sc[y-1]=sc[y]+sf[y]}
+ for(let i=N;i>=1;i--)pc[i-1]=pc[i]+Math.floor(10000/(i+200));
+ let low=0,high=Q4,value=0,ip=0,bf=0,mk=0;
+ const bit=()=>{mk>>=1;if(!mk){bf=ip<src.length?src[ip]:0;ip++;mk=128}return bf&mk?1:0};
+ for(let i=0;i<17;i++)value=2*value+bit();
+ const upd=y=>{
+  if(sc[0]>=MAXC){let c=0;for(let i=NC;i>0;i--){sc[i]=c;sf[i]=(sf[i]+1)>>1;c+=sf[i]}sc[0]=c}
+  let i=y;while(sf[i]===sf[i-1])i--;
+  if(i<y){const a=s2c[i],b=s2c[y];s2c[i]=b;s2c[y]=a;c2s[a]=y;c2s[b]=i}
+  sf[i]++;while(--i>=0)sc[i]++};
+ const norm=()=>{for(;;){if(low>=Q2){value-=Q2;low-=Q2;high-=Q2}else if(low>=Q1&&high<=Q3){value-=Q1;low-=Q1;high-=Q1}else if(high>Q2)break;low+=low;high+=high;value=2*value+bit()}};
+ const dch=()=>{const r=high-low,x=Math.floor(((value-low+1)*sc[0]-1)/r);let i=1,j=NC;
+  while(i<j){const k=(i+j)>>1;if(sc[k]>x)i=k+1;else j=k}
+  high=low+Math.floor(r*sc[i-1]/sc[0]);low+=Math.floor(r*sc[i]/sc[0]);norm();const ch=s2c[i];upd(i);return ch};
+ const dpos=()=>{const r=high-low,x=Math.floor(((value-low+1)*pc[0]-1)/r);let i=1,j=N;
+  while(i<j){const k=(i+j)>>1;if(pc[k]>x)i=k+1;else j=k}
+  const q=i-1;high=low+Math.floor(r*pc[q]/pc[0]);low+=Math.floor(r*pc[q+1]/pc[0]);norm();return q};
+ const out=new Uint8Array(length),tb=new Uint8Array(N).fill(32);let r=N-F,n=0;
+ while(n<length){const c=dch();
+  if(c<256){out[n++]=c;tb[r]=c;r=(r+1)&(N-1)}
+  else{const i=(r-dpos()-1)&(N-1),j=c-255+TH;
+   for(let k=0;k<j&&n<length;k++){const ch=tb[(i+k)&(N-1)];out[n++]=ch;tb[r]=ch;r=(r+1)&(N-1)}}}
+ return out}
+function parseMAX(buf){
+ const u=new Uint8Array(buf),v=new DataView(buf);
+ if(u.length<0x5C||lat(u.subarray(0,12))!=="Ps2PowerSave")throw new Error("Not a valid .max file");
+ const clen=v.getUint32(80,true),dl=v.getUint32(84,true),len=v.getUint32(88,true);
+ if(len>(128<<20)||dl>4096)throw new Error("Implausible .max header");
+ const sdat=lzari(clen===len?u.subarray(0x5C):u.subarray(0x5C,0x5C+Math.max(0,clen-4)),len),sv=new DataView(sdat.buffer),files=[];
+ let off=0;
+ for(let i=0;i<dl;i++){
+  if(sdat.length-off<36)throw new Error(".max data is truncated or failed to decompress");
+  const l=sv.getUint32(off,true),name=zt(sdat.slice(off+4,off+36));off+=36;
+  const data=sdat.slice(off,off+l);if(data.length!==l)throw new Error(".max data is truncated or failed to decompress");
+  off+=l;off=((off+8+15)&~15)-8;
+  files.push({name,mode:0x8417,created:NOW,modified:NOW,data})}
+ return{name:zt(u.slice(16,48)),mode:0x8427,created:NOW,modified:NOW,files}}
+function parseAny(buf,fn){
+ const u=new Uint8Array(buf,0,Math.min(32,buf.byteLength));
+ if(lat(u.subarray(0,4))==="CFU\0")return parseCBS(buf);
+ if(lat(u.subarray(0,12))==="Ps2PowerSave")return parseMAX(buf);
+ if(lat(u.subarray(0,17))==="\x0d\0\0\0SharkPortSave")return parseXPS(buf);
+ try{return parsePSU(buf)}catch(e){}
+ throw new Error("Unrecognized format. Supported: .cbs, .psu, .xps, .max.")}
+const T=new Uint8Array(256);for(let x=0;x<256;x++){let v=0;for(let b=0;b<8;b++)if(x>>b&1)v^=0x87+0x0F*b;T[x]=v}
+function ecc(d,s,out,o){let a=0,b=0,c=0;for(let i=0;i<128;i++){const t=T[d[s+i]];a^=t;if(t&0x80){b^=~i;c^=i}}out[o]=~a&0x77;out[o+1]=~b&0x7f;out[o+2]=~c&0x7f}
+const geo=mb=>{const NCL=mb*1024,F=Math.ceil((NCL-10)/256),AO=9+F,NA=NCL-16-AO;return{NCL,F,AO,NA,LIM:Math.floor(NA/1000)*1000}};
+function build(saves,mb){const{NCL,F,AO,NA,LIM}=geo(mb),NP=NCL*2;
+ const fat=new Uint32Array(F*256).fill(0x7FFFFFFF),cl=new Map();fat.fill(0xFFFFFFFF,NA);fat[0]=0xFFFFFFFF;
+ const alloc=()=>{for(let n=0;n<LIM;n++)if(fat[n]===0x7FFFFFFF){fat[n]=0xFFFFFFFF;return n}throw new Error("Memory card "+mb+" MB is full")};
+ const chain=(by,first)=>{const cnt=Math.max(1,Math.ceil(by.length/CL)),ch=[];
+  for(let i=0;i<cnt;i++)ch.push(i===0&&first!==undefined?first:alloc());
+  ch.forEach((c,i)=>{fat[c]=i<cnt-1?(0x80000000|ch[i+1])>>>0:0xFFFFFFFF;const b=new Uint8Array(CL).fill(0xFF);b.set(by.subarray(i*CL,(i+1)*CL));cl.set(c,b)});return ch[0]};
+ const cat=a=>{const o=new Uint8Array(a.reduce((s,x)=>s+x.length,0));let p=0;a.forEach(x=>{o.set(x,p);p+=x.length});return o};
+ const D=(m,l,cr,c,de,mo,nm)=>{const b=new Uint8Array(512),v=new DataView(b.buffer);v.setUint32(0,m,true);v.setUint32(4,l,true);b.set(cr,8);v.setUint32(16,c,true);v.setUint32(20,de,true);b.set(mo,24);b.set(nm.subarray(0,31),64);return b};
+ const DOT=enc.encode("."),DD=enc.encode("..");
+ const rootE=[];
+ saves.forEach(s=>{
+  const fe=s.files.map(f=>D(f.mode,f.data.length,f.created,f.data.length?chain(f.data):0xFFFFFFFF,0,f.modified,f.name));
+  const idx=2+rootE.length;
+  const sc=chain(cat([D(0x8427,0,s.created,0,idx,s.modified,DOT),D(0x8427,0,s.created,0,0,s.modified,DD),...fe]));
+  rootE.push(D(s.mode,s.files.length+2,s.created,sc,0,s.modified,s.name))});
+ chain(cat([D(0x8427,2+rootE.length,NOW,0,0,NOW,DOT),D(0xA426,0,NOW,0,0,NOW,DD),...rootE]),0);
+ const data=new Uint8Array(NP*512).fill(0xFF),dv=new DataView(data.buffer);
+ data.set(enc.encode("Sony PS2 Memory Card Format 1.2.0.0"),0);data.fill(0,35,512);
+ dv.setUint16(0x28,512,true);dv.setUint16(0x2A,2,true);dv.setUint16(0x2C,16,true);dv.setUint16(0x2E,0xFF00,true);
+ dv.setUint32(0x30,NCL,true);dv.setUint32(0x34,AO,true);dv.setUint32(0x38,NA,true);dv.setUint32(0x3C,0,true);
+ dv.setUint32(0x40,NCL/8-1,true);dv.setUint32(0x44,NCL/8-2,true);dv.setUint32(0x50,8,true);
+ for(let i=0;i<32;i++)dv.setUint32(0xD0+i*4,0xFFFFFFFF,true);
+ data[0x150]=2;data[0x151]=0x2B;
+ for(let i=0;i<F;i++)dv.setUint32(8*CL+i*4,9+i,true);
+ for(let i=0;i<F*256;i++)dv.setUint32(9*CL+i*4,fat[i],true);
+ cl.forEach((b,n)=>data.set(b,(AO+n)*CL));
+ const img=new Uint8Array(NP*PG);
+ for(let p=0;p<NP;p++){const o=p*PG;img.set(data.subarray(p*512,p*512+512),o);for(let k=0;k<4;k++)ecc(data,p*512+k*128,img,o+512+k*3)}
+ return img}
+function zip(name,data){
+ const ct=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;ct[n]=c>>>0}
+ let crc=-1;for(let i=0;i<data.length;i++)crc=ct[(crc^data[i])&255]^(crc>>>8);crc=(~crc)>>>0;
+ const z=pako.deflateRaw(data,{level:1}),nm=enc.encode(name),L=30+nm.length,C=46+nm.length;
+ const out=new Uint8Array(L+z.length+C+22),v=new DataView(out.buffer);
+ const w=(o,a)=>a.forEach(([off,sz,val])=>sz===4?v.setUint32(o+off,val,true):v.setUint16(o+off,val,true));
+ w(0,[[0,4,0x04034b50],[4,2,20],[8,2,8],[12,2,0x21],[14,4,crc],[18,4,z.length],[22,4,data.length],[26,2,nm.length]]);out.set(nm,30);out.set(z,L);
+ const c=L+z.length;
+ w(c,[[0,4,0x02014b50],[4,2,20],[6,2,20],[10,2,8],[14,2,0x21],[16,4,crc],[20,4,z.length],[24,4,data.length],[28,2,nm.length]]);out.set(nm,c+46);
+ w(c+C,[[0,4,0x06054b50],[8,2,1],[10,2,1],[12,4,C],[16,4,c]]);
+ return out}
+window.PS2zip=zip;window.PS2build=build;
+window.PS2report=(err,area)=>"https://github.com/zenxyz0/PS2-Save-Tools-Beta/issues/new?template=bug_report.yml&title="+encodeURIComponent("[Bug] "+area+": "+err.slice(0,70))+"&area="+encodeURIComponent(area)+"&error="+encodeURIComponent(err);
+window.PS2save=async(file,bytes)=>{
+ if(window.claude){const dl=await claude.use("downloads");if(!dl)throw new Error("Downloads are not available in this view.");
+  await dl.save({filename:file.replace(/\.[^.]+$/,"")+".zip",data:new Blob([zip(file,bytes)])});return"zip"}
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bytes],{type:"application/octet-stream"}));a.download=file;document.body.append(a);a.click();
+ setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);return"raw"};
+const msg=(t,e)=>{const m=$("c-m");m.textContent=t;m.className=e===1?"e":e===2?"o":"";
+ if(e===1&&t){const a=document.createElement("a");a.href=window.PS2report(t,"Converter");a.target="_blank";a.rel="noopener";a.className="rp";a.textContent=" Report this on GitHub";m.append(a)}};
+const sel=()=>saves.filter(s=>s.on!==false);
+function cicon(s){if(s.th)return s.th;let c=null;
+ try{const ic=s.files.find(f=>lat(f.name)==="icon.sys");
+  if(ic&&window.PS2icon){const nz=lat(zt(ic.data.slice(0x104,0x144))),fi=s.files.find(f=>lat(f.name)===nz);if(fi)c=window.PS2icon(fi.data)}}catch(x){}
+ if(!c){c=document.createElement("div");c.textContent="💾"}c.className="th";return s.th=c}
+function render(){
+ const l=$("c-l");l.textContent="";
+ if(saves.length){const bar=document.createElement("li"),lb=document.createElement("label"),all=document.createElement("input");
+  bar.className="cbar";all.type="checkbox";all.checked=saves.every(s=>s.on!==false);
+  all.onchange=()=>{saves.forEach(s=>{s.on=all.checked});render()};
+  lb.append(all,document.createTextNode(" Select all ("+sel().length+"/"+saves.length+" selected)"));bar.append(lb);l.append(bar)}
+ saves.forEach(s=>{const li=document.createElement("li"),cb=document.createElement("input"),t=document.createElement("span"),sm=document.createElement("small");
+  li.className="csv";cb.type="checkbox";cb.checked=s.on!==false;cb.setAttribute("aria-label","Include "+lat(s.name));
+  cb.onchange=()=>{s.on=cb.checked;render()};
+  t.textContent=lat(s.name);sm.textContent=s.files.length+" files • "+Math.ceil(s.files.reduce((a,f)=>a+f.data.length,0)/1024)+" KB";t.append(sm);
+  li.append(cb,cicon(s),t);l.append(li)});
+ $("c-go").disabled=!(sel().length||base);$("c-rs").disabled=!(saves.length||base);renderBase()}
+$("c-f").onchange=async e=>{
+ msg("");
+ for(const f of e.target.files){try{saves.push(parseAny(await f.arrayBuffer(),f.name))}catch(x){msg(f.name+": "+x.message,1)}}
+ e.target.value="";render()};
+$("c-rs").onclick=()=>{saves=[];base=null;$("c-bi").textContent="";$("c-o").textContent="";msg("");render()};
+let base=null,sz=8;
+const segUpd=()=>document.querySelectorAll("#c-sz button").forEach(b=>b.classList.toggle("on",+b.dataset.mb===sz));
+document.querySelectorAll("#c-sz button").forEach(b=>b.onclick=()=>{sz=+b.dataset.mb;segUpd()});
+const mk=(t,x,c)=>{const e=document.createElement(t);if(x!==undefined)e.textContent=x;if(c)e.className=c;return e};
+function bicon(s){if(s.th)return s.th;let c=null;try{if(s.ico&&window.PS2icon)c=window.PS2icon(s.ico)}catch(x){}
+ if(!c){c=document.createElement("div");c.textContent="💾"}c.className="th";return s.th=c}
+function renderBase(){
+ const l=$("c-bl");l.textContent="";if(!base)return;
+ const bar=document.createElement("li"),lb=document.createElement("label"),all=document.createElement("input");
+ bar.className="cbar";all.type="checkbox";all.checked=base.keep.every(Boolean);
+ all.onchange=()=>{base.keep=base.keep.map(()=>all.checked);renderBase()};
+ lb.append(all,document.createTextNode(" Existing card: keep all ("+base.keep.filter(Boolean).length+"/"+base.keep.length+" kept)"));bar.append(lb);l.append(bar);
+ const nm=new Set(sel().map(x=>lat(x.name)));
+ base.saves.forEach((s,i)=>{const li=document.createElement("li"),cb=document.createElement("input"),t=document.createElement("span"),sm=document.createElement("small");
+  li.className="csv";cb.type="checkbox";cb.checked=base.keep[i];cb.setAttribute("aria-label","Keep "+(s.title||s.dir));
+  cb.onchange=()=>{base.keep[i]=cb.checked;renderBase()};
+  t.textContent=s.title||s.dir;
+  sm.textContent=s.dir+" • "+s.files.length+" files • "+Math.ceil(s.size/1024)+" KB"+(nm.has(lat(s.e.raw))&&cb.checked?" • will be replaced by a new save":"");
+  t.append(sm);li.append(cb,bicon(s),t);l.append(li)})}
+$("c-b").onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ try{const r=window.PS2parse(await f.arrayBuffer());const mb=r.ncl/1024;if(![8,16,32,64].includes(mb))throw new Error("Card size "+mb+" MB is not supported. Choose an 8, 16, 32, or 64 MB card.");sz=mb;segUpd();
+  base={ex:r.extract(),saves:r.saves,keep:r.saves.map(()=>true)};render();$("c-bi").textContent="Base card: "+f.name+" ("+r.saves.length+" saves). Size set to "+mb+" MB (you may enlarge it). New saves will be added; untick an existing save to remove it."}
+ catch(x){base=null;render();$("c-bi").textContent="";msg("Base card: "+(x.message||String(x)),1)}
+ e.target.value=""};
+async function saveOut(img){try{const m=await window.PS2save("Mcd001.ps2",img);msg(m==="zip"?"Done. Extract Mcd001.zip to get Mcd001.ps2.":"Done. Mcd001.ps2 downloaded.",2)}catch(x){msg(x.code==="declined"?"Download canceled.":(x.message||String(x)),1)}}
+$("c-go").onclick=async()=>{
+ const o=$("c-o");o.textContent="";o.className="";
+ try{
+  msg("Building memory card…");await new Promise(r=>setTimeout(r,40));
+  const pick=sel();let all=pick.slice();const rp=[];
+  if(base){const nm=new Set(pick.map(x=>lat(x.name)));
+   all=[...base.ex.filter((x,i)=>{if(!base.keep[i])return false;const d=nm.has(lat(x.name));if(d)rp.push(lat(x.name));return!d}),...pick]}
+  const need=all.reduce((a,x)=>a+Math.ceil((x.files.length+2)/2)+x.files.reduce((b,f)=>b+Math.max(1,Math.ceil(f.data.length/1024)),0),0)+Math.ceil((all.length+2)/2);
+  const G=geo(sz);if(need>G.LIM-1)throw new Error("Card "+sz+" MB is full: need about "+need+" KB, but only "+(G.LIM-1)+" KB are available. Pick a larger size or remove saves.");
+  const img=build(all,sz),chk=window.PS2parse(img.buffer);
+  const ok=chk.saves.length===all.length&&chk.saves.every((x,i)=>x.files.length===all[i].files.length&&x.size===all[i].files.reduce((a,f)=>a+f.data.length,0));
+  if(!ok)throw new Error("Verification failed: the resulting card does not match the input. Do not use it.");
+  msg("");o.className="dl";
+  o.append(mk("div","✔ Verified: "+chk.saves.length+" saves read back with matching file counts and sizes."+(rp.length?" Replaced: "+rp.join(", ")+".":"")));
+  const r=mk("div",undefined,"row"),b1=mk("button",window.claude?"⬇ Download Mcd001.zip":"⬇ Download Mcd001.ps2","p"),b2=mk("button","🔍 Open in Reader","s");
+  b1.onclick=()=>saveOut(img);
+  b2.onclick=()=>{window.PS2load(img.buffer);location.hash="baca"};
+  r.append(b1,b2);o.append(r)
+ }catch(x){msg(x.message||String(x),1)}};
+
+})();
+(()=>{
+
+const $=i=>document.getElementById(i);
+const T=new Uint8Array(256);for(let x=0;x<256;x++){let v=0;for(let b=0;b<8;b++)if(x>>b&1)v^=0x87+0x0F*b;T[x]=v}
+function ecc(d,s,out,o){let a=0,b=0,c=0;for(let i=0;i<128;i++){const t=T[d[s+i]];a^=t;if(t&0x80){b^=~i;c^=i}}out[o]=~a&0x77;out[o+1]=~b&0x7f;out[o+2]=~c&0x7f}
+const zt=b=>{const i=b.indexOf(0);return b.slice(0,i<0?b.length:i)};
+const sj=new TextDecoder("shift_jis"),dec=b=>sj.decode(b).normalize("NFKC");
+const kb=n=>n<1024?n+" B":Math.ceil(n/1024)+" KB";
+const tm=t=>{const y=t[6]|t[7]<<8;if(!y)return"-";const p=n=>String(n).padStart(2,"0");return y+"-"+p(t[5])+"-"+p(t[4])+" "+p(t[3])+":"+p(t[2])};
+function parse(buf){
+ const u=new Uint8Array(buf.slice(0)),dv=new DataView(u.buffer);
+ if(u.length<512||String.fromCharCode(...u.subarray(0,28))!=="Sony PS2 Memory Card Format ")throw new Error("This is not a valid PS2 memory card file.");
+ const ppc=dv.getUint16(0x2A,true),ncl=dv.getUint32(0x30,true),ao=dv.getUint32(0x34,true),ae=dv.getUint32(0x38,true),rc=dv.getUint32(0x3C,true);
+ const stride=u.length===ncl*ppc*512?512:u.length===ncl*ppc*528?528:0;
+ if(!ppc||!stride)throw new Error("File size does not match the card format (needs .ps2 with or without ECC).");
+ const clus=c=>{const o=new Uint8Array(ppc*512);for(let i=0;i<ppc;i++){const p=(c*ppc+i)*stride;o.set(u.subarray(p,p+512),i*512)}return o};
+ const u32=b=>new Uint32Array(b.buffer,b.byteOffset,b.length>>2);
+ const fat=[],fatCl=[];
+ for(let i=0;i<32;i++){const ic=dv.getUint32(0x50+i*4,true);if(!ic||ic===0xFFFFFFFF||ic>=ncl)continue;
+  for(const fc of u32(clus(ic))){if(!fc||fc===0xFFFFFFFF||fc>=ncl)break;fatCl.push(fc);for(const v of u32(clus(fc)))fat.push(v)}}
+ const chain=(first,size)=>{const parts=[];let n=first,g=0;
+  while(n!==0xFFFFFFFF&&g++<=ae&&n<fat.length&&ao+n<ncl){parts.push(clus(ao+n));const v=fat[n];n=v>=0x80000000?(v===0xFFFFFFFF?v:v&0x7FFFFFFF):0xFFFFFFFF}
+  const o=new Uint8Array(parts.length*ppc*512);parts.forEach((p,i)=>o.set(p,i*ppc*512));return size===undefined?o:o.slice(0,size)};
+ const ents=b=>{const r=[];for(let o=0;o+512<=b.length;o+=512){const v=new DataView(b.buffer,b.byteOffset+o,512);
+  r.push({mode:v.getUint32(0,true),len:v.getUint32(4,true),cr:b.slice(o+8,o+16),cl:v.getUint32(16,true),mo:b.slice(o+24,o+32),raw:zt(b.slice(o+64,o+96))})}
+  r.forEach(e=>e.name=sj.decode(e.raw));return r};
+ const rb=chain(rc),root=ents(rb).slice(0,new DataView(rb.buffer).getUint32(4,true)||2);
+ const saves=[];
+ for(const e of root.slice(2)){
+  if(!(e.mode&0x8000)||!(e.mode&0x20))continue;
+  const files=ents(chain(e.cl)).slice(0,e.len).filter(x=>x.name!=="."&&x.name!==".."&&(x.mode&0x8000)&&(x.mode&0x10));
+  let title="",ico=null;const ic=files.find(x=>x.name==="icon.sys");
+  if(ic){const d=chain(ic.cl,ic.len);if(d.length>=0x100&&String.fromCharCode(...d.subarray(0,4))==="PS2D"){
+   const br=new DataView(d.buffer).getUint16(6,true),t=zt(d.slice(0xC0,0xC0+68));
+   title=(dec(t.slice(0,br))+" "+dec(t.slice(br))).replace(/\s+/g," ").trim();const inm=sj.decode(zt(d.slice(0x104,0x144))),fi=files.find(x=>x.name===inm);if(fi)ico=chain(fi.cl,fi.len)}}
+  saves.push({dir:e.name,title,mo:e.mo,files,e,ico,idx:root.indexOf(e),cl:e.cl,size:files.reduce((a,f)=>a+f.len,0),ps1:!!(e.mode&0x1000)})}
+ const lim=Math.floor(ae/1000)*1000||ae;let free=0;for(let i=0;i<lim&&i<fat.length;i++)if(fat[i]===0x7FFFFFFF)free++;
+ const nodes=first=>{const r=[];let n=first,g=0;while(n!==0xFFFFFFFF&&g++<=ae&&n<fat.length&&ao+n<ncl){r.push(n);const v=fat[n];n=v>=0x80000000?(v===0xFFFFFFFF?v:v&0x7FFFFFFF):0xFFFFFFFF}return r};
+ const b4=n=>Uint8Array.of(n&255,n>>8&255,n>>16&255,n>>>24&255),dirty=new Set();
+ const wr=(c,off,b)=>{for(let i=0;i<b.length;i++){const a=c*ppc*512+off+i,p=Math.floor(a/512);u[p*stride+a%512]=b[i];dirty.add(p)}};
+ const del=sel=>{
+  const per=ppc*128,rn=nodes(rc),rs=ppc*512;
+  for(const s of sel){
+   for(const n of [...nodes(s.cl),...s.files.flatMap(f=>nodes(f.cl))]){fat[n]=0x7FFFFFFF;wr(fatCl[Math.floor(n/per)],(n%per)*4,b4(0x7FFFFFFF))}
+   root[s.idx].mode&=~0x8000;const o=s.idx*512;wr(ao+rn[Math.floor(o/rs)],o%rs,b4(root[s.idx].mode>>>0))}
+  let cnt=root.length;while(cnt>2&&!(root[cnt-1].mode&0x8000))cnt--;
+  wr(ao+rn[0],4,b4(cnt));
+  if(stride===528)dirty.forEach(p=>{for(let k=0;k<4;k++)ecc(u,p*528+k*128,u,p*528+512+k*3)});
+  return u};
+ return{saves,ncl,rd:f=>chain(f.cl,f.len),extract:()=>saves.map(x=>({name:x.e.raw,mode:x.e.mode,created:x.e.cr,modified:x.e.mo,files:x.files.map(f=>({name:f.raw,mode:f.mode,created:f.cr,modified:f.mo,data:chain(f.cl,f.len)}))})),total:lim*ppc*512,free:free*ppc*512,u,del}}
+const el=(t,x,c)=>{const e=document.createElement(t);if(x!==undefined)e.textContent=x;if(c)e.className=c;return e};
+let cur=null,armed=false,edited=0,hist=[];const sel=new Set(),B={};
+const lat=b=>Array.from(b,c=>String.fromCharCode(c)).join("");
+const tk=t=>Date.UTC(t[6]|t[7]<<8,Math.max(0,t[5]-1),t[4]||1,t[3],t[2],t[1]);
+const sortF={n:(a,b)=>(a.title||a.dir).localeCompare(b.title||b.dir),d:(a,b)=>tk(b.mo)-tk(a.mo),s:(a,b)=>b.size-a.size};
+const vis=()=>{const q=$("r-q").value.trim().toLowerCase();return cur.saves.filter(x=>!q||(x.title+" "+x.dir).toLowerCase().includes(q)).sort(sortF[$("r-o").value])};
+function tri(c,im,x0,y0,x1,y1,x2,y2,u0,v0,u1,v1,u2,v2){
+ const d=u0*v1+v0*u2+u1*v2-v1*u2-v0*u1-u0*v2;if(!d)return;
+ const a=(x0*v1+v0*x2+x1*v2-v1*x2-v0*x1-x0*v2)/d,b=(y0*v1+v0*y2+y1*v2-v1*y2-v0*y1-y0*v2)/d,cc=(u0*x1+x0*u2+u1*x2-x1*u2-x0*u1-u0*x2)/d,dd=(u0*y1+y0*u2+u1*y2-y1*u2-y0*u1-u0*y2)/d,e=(u0*v1*x2+v0*x1*u2+x0*u1*v2-x0*v1*u2-v0*u1*x2-u0*x1*v2)/d,f=(u0*v1*y2+v0*y1*u2+y0*u1*v2-y0*v1*u2-v0*u1*y2-u0*y1*v2)/d;
+ c.save();c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.lineTo(x2,y2);c.closePath();c.clip();c.transform(a,b,cc,dd,e,f);c.drawImage(im,0,0);c.restore()}
+function icon(f){
+ const d=new DataView(f.buffer,f.byteOffset,f.byteLength);
+ if(d.getUint32(0,true)!==0x10000)return null;
+ const sh=d.getUint32(4,true),tt=d.getUint32(8,true),vc=d.getUint32(16,true),vs=sh*8+16,V=[];
+ for(let i=0;i<vc;i++){const b=20+i*vs,t=b+sh*8+8;V.push([d.getInt16(b,true)/4096,d.getInt16(b+2,true)/4096,d.getInt16(b+4,true)/4096,d.getInt16(t,true)/32,d.getInt16(t+2,true)/32])}
+ let o=20+vc*vs;const fc=d.getUint32(o+16,true);o+=20;for(let i=0;i<fc;i++)o+=8+d.getUint32(o+4,true)*8;
+ const px=new Uint16Array(16384);
+ if(tt&8){let q=o+4,p=0;const e=q+d.getUint32(o,true);
+  while(q<e&&p<16384){const c=d.getUint16(q,true);q+=2;
+   if(c>=0xFF00){for(let n=0x10000-c;n--&&p<16384;q+=2)px[p++]=d.getUint16(q,true)}
+   else{const w=d.getUint16(q,true);q+=2;for(let n=c;n--&&p<16384;)px[p++]=w}}}
+ else for(let i=0;i<16384;i++)px[i]=d.getUint16(o+i*2,true);
+ const tc=document.createElement("canvas");tc.width=tc.height=128;const tx=tc.getContext("2d"),im=tx.createImageData(128,128);
+ px.forEach((w,i)=>im.data.set([(w&31)*8.2,(w>>5&31)*8.2,(w>>10&31)*8.2,255],i*4));tx.putImageData(im,0,0);
+ const cs=.8,sn=.6,P=V.map(v=>[v[0]*cs+v[2]*sn,v[1],-v[0]*sn+v[2]*cs]);
+ let a=1e9,b=-1e9,c=1e9,e=-1e9;P.forEach(p=>{a=Math.min(a,p[0]);b=Math.max(b,p[0]);c=Math.min(c,p[1]);e=Math.max(e,p[1])});
+ const S=58/Math.max(b-a,e-c,.01),ox=32-(a+b)/2*S,oy=32-(c+e)/2*S,cv=document.createElement("canvas");cv.width=cv.height=64;const g=cv.getContext("2d");
+ const Q=[];for(let i=0;i+2<vc;i+=3)Q.push(i);Q.sort((m,n)=>(P[n][2]+P[n+1][2]+P[n+2][2])-(P[m][2]+P[m+1][2]+P[m+2][2]));
+ Q.forEach(i=>{const A=P[i],Bb=P[i+1],C=P[i+2];tri(g,tc,A[0]*S+ox,A[1]*S+oy,Bb[0]*S+ox,Bb[1]*S+oy,C[0]*S+ox,C[1]*S+oy,V[i][3],V[i][4],V[i+1][3],V[i+1][4],V[i+2][3],V[i+2][4])});
+ return cv}
+function thumb(s){if(s.th)return s.th;let c=null;try{if(s.ico)c=icon(s.ico)}catch(x){}
+ if(!c){c=document.createElement("div");c.textContent="💾"}c.className="th";return s.th=c}
+function psu(s){
+ const D=(m,l,cr,mo,nm)=>{const b=new Uint8Array(512),v=new DataView(b.buffer);v.setUint32(0,m,true);v.setUint32(4,l,true);b.set(cr,8);b.set(mo,24);b.set(nm.subarray(0,31),64);return b};
+ const E=new TextEncoder(),P=[D(s.e.mode,s.files.length+2,s.e.cr,s.e.mo,s.e.raw),D(0x8427,0,s.e.cr,s.e.mo,E.encode(".")),D(0x8427,0,s.e.cr,s.e.mo,E.encode(".."))];
+ s.files.forEach(f=>{const d=cur.rd(f),pd=new Uint8Array(Math.ceil(f.len/1024)*1024);pd.set(d);P.push(D(f.mode,f.len,f.cr,f.mo,f.raw),pd)});
+ const o=new Uint8Array(P.reduce((a,x)=>a+x.length,0));let p=0;P.forEach(x=>{o.set(x,p);p+=x.length});return o}
+async function dlSave(file,bytes){try{await window.PS2save(file,bytes)}catch(x){if(x.code!=="declined")$("r-m").textContent=x.message||String(x)}}
+function updBar(){if(!B.del)return;const v=vis();
+ B.del.textContent=armed?"Delete "+sel.size+" save(s)? Click again":"🗑 Delete selected ("+sel.size+")";
+ B.del.disabled=!sel.size;B.cancel.style.display=armed?"":"none";B.all.checked=v.length>0&&v.every(x=>sel.has(x))}
+function dlArea(){const d=$("r-d");d.textContent="";if(!edited)return;
+ d.append(el("div","✔ "+edited+" save(s) deleted from the card. The change only exists in your browser; your original file is untouched. Download the modified card, extract the zip if needed, then overwrite the old Mcd001.ps2."));
+ const r=el("div",undefined,"row"),b=el("button",window.claude?"⬇ Download Mcd001.zip":"⬇ Download Mcd001.ps2","p");
+ b.onclick=()=>dlSave("Mcd001.ps2",cur.u);r.append(b);
+ if(hist.length){const u=el("button","↩ Undo","s");
+  u.onclick=()=>{const h=hist.pop();cur=parse(h.img.buffer);edited-=h.n;sel.clear();armed=false;draw();dlArea()};r.append(u)}
+ d.append(r)}
+function draw(){
+ const r=cur,L=$("r-l");L.textContent="";B.del=null;
+ $("r-s").textContent=r.saves.length+" saves • used "+kb(r.total-r.free)+" of "+kb(r.total)+" • free "+kb(r.free);
+ const cp=$("r-c");cp.style.display="block";cp.firstChild.style.width=((r.total-r.free)/r.total*100).toFixed(1)+"%";
+ $("r-t").style.display=r.saves.length?"flex":"none";
+ if(!r.saves.length){L.append(el("p","This card is empty: no saves yet."));return}
+ const list=vis();if(!list.length){L.append(el("p","No saves match your search."));return}
+ const bar=el("div",undefined,"bar"),lb=el("label",undefined,"chk");
+ B.all=document.createElement("input");B.all.type="checkbox";
+ B.all.onchange=()=>{list.forEach(x=>B.all.checked?sel.add(x):sel.delete(x));armed=false;L.querySelectorAll(".sv input").forEach(c=>c.checked=B.all.checked);updBar()};
+ lb.append(B.all,document.createTextNode("Select all"));
+ B.del=el("button","","p dg");B.cancel=el("button","Batal","s");
+ B.del.onclick=()=>{if(!armed){armed=true;updBar()}else doDel()};
+ B.cancel.onclick=()=>{armed=false;updBar()};
+ bar.append(lb,B.del,B.cancel);L.append(bar);
+ list.forEach(s=>{
+  const w=el("div",undefined,"sv"),c=document.createElement("input");c.type="checkbox";c.checked=sel.has(s);c.setAttribute("aria-label","Select "+(s.title||s.dir));
+  c.onchange=()=>{c.checked?sel.add(s):sel.delete(s);armed=false;updBar()};
+  const d=el("details"),sm=el("summary",s.title||s.dir),sub=el("small",s.dir+" • "+tm(s.mo)+" • "+s.files.length+" files • "+kb(s.size)+(s.ps1?" • PS1":""));
+  sm.append(sub);d.append(sm);const b=el("div",undefined,"f");
+  const xb=el("button","⬇ Export .psu","s xb"),nm=lat(s.e.raw).replace(/[^\w.-]/g,"_")||"save";
+  xb.onclick=()=>dlSave(nm+".psu",psu(s));b.append(xb);
+  s.files.forEach(x=>{const row=el("div");row.append(el("span",x.name),el("span",kb(x.len)));b.append(row)});
+  d.append(b);w.append(c,thumb(s),d);L.append(w)});
+ updBar()}
+function doDel(){
+ try{const p=[...sel],n=p.length;hist.push({img:cur.u.slice(),n});if(hist.length>3)hist.shift();
+  const u=cur.del(p);cur=parse(u.buffer);sel.clear();armed=false;edited+=n;draw();dlArea();$("r-m").textContent=""}
+ catch(x){$("r-m").textContent=x.message||String(x)}}
+function load(buf){$("r-m").textContent="";$("r-d").textContent="";sel.clear();armed=false;edited=0;hist=[];$("r-q").value="";cur=parse(buf);draw()}
+window.PS2parse=parse;window.PS2icon=icon;window.PS2load=buf=>{try{load(buf)}catch(x){$("r-m").textContent=x.message||String(x)}};
+$("r-q").oninput=()=>{if(cur){armed=false;draw()}};$("r-o").onchange=()=>{if(cur)draw()};
+$("r-f").onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ $("r-s").textContent="";$("r-l").textContent="";
+ try{load(await f.arrayBuffer())}catch(x){cur=null;$("r-m").textContent=x.message||String(x)}
+ e.target.value=""};
+
+})();
+(()=>{
+const $=i=>document.getElementById(i),kb=n=>n<1024?n+" B":Math.ceil(n/1024)+" KB";
+const lat=b=>Array.from(b,c=>String.fromCharCode(c)).join("");
+const el=(t,x,c)=>{const e=document.createElement(t);if(x!==undefined)e.textContent=x;if(c)e.className=c;return e};
+const P={a:null,b:null},sel={a:new Set(),b:new Set()};
+function msg(t,e){const m=$("s-m");m.textContent=t;m.className="msg "+(e===1?"e":e===2?"o":"")}
+function draw(k){
+ const c=P[k],L=$("s-l"+k),S=$("s-s"+k);L.textContent="";
+ if(!c){S.textContent="No card loaded.";return}
+ const r=c.r;S.textContent=c.name+" • "+(r.ncl/1024)+" MB • "+r.saves.length+" saves • free "+kb(r.free);
+ r.saves.forEach(s=>{const w=el("label",undefined,"srow"),cb=document.createElement("input");cb.type="checkbox";cb.checked=sel[k].has(s);
+  cb.onchange=()=>{cb.checked?sel[k].add(s):sel[k].delete(s)};
+  const t=el("span",s.title||s.dir);t.append(el("small",s.dir+" • "+kb(s.size)));w.append(cb,t);L.append(w)})}
+function setCard(k,name,buf){const r=window.PS2parse(buf),mb=r.ncl/1024;
+ if(![8,16,32,64].includes(mb))throw new Error("Card size "+mb+" MB is not supported.");
+ P[k]={name,r};sel[k].clear();draw(k)}
+function xfer(from,mode){
+ const to=from==="a"?"b":"a",src=P[from],dst=P[to];
+ if(!src||!dst)return msg("Load both cards first, or create an empty card.",1);
+ const pick=[...sel[from]];if(!pick.length)return msg("Tick the saves to "+(mode==="move"?"move":"copy")+" first.",1);
+ try{
+  const ex=src.r.extract(),names=new Set(pick.map(s=>lat(s.e.raw))),moved=ex.filter(x=>names.has(lat(x.name)));
+  const keep=dst.r.extract().filter(x=>!names.has(lat(x.name))),rp=dst.r.extract().length-keep.length;
+  const img=window.PS2build([...keep,...moved],dst.r.ncl/1024);
+  P[to]={name:dst.name,r:window.PS2parse(img.buffer)};
+  if(mode==="move")P[from]={name:src.name,r:window.PS2parse(window.PS2build(ex.filter(x=>!names.has(lat(x.name))),src.r.ncl/1024).buffer)};
+  sel.a.clear();sel.b.clear();draw("a");draw("b");
+  msg("✔ "+pick.length+" save(s) "+(mode==="move"?"moved":"copied")+" to Card "+to.toUpperCase()+(rp?" ("+rp+" existing save(s) replaced)":"")+". Download the changed card(s).",2)
+ }catch(x){msg(x.message||String(x),1)}}
+for(const k of["a","b"]){
+ $("s-f"+k).onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  try{setCard(k,f.name,await f.arrayBuffer());msg("")}catch(x){msg(f.name+": "+(x.message||String(x)),1)}e.target.value=""};
+ $("s-k"+k).onclick=()=>{try{const img=window.PS2build([],+$("s-z"+k).value);P[k]={name:k==="a"?"Mcd001.ps2":"Mcd002.ps2",r:window.PS2parse(img.buffer)};sel[k].clear();draw(k);msg("")}catch(x){msg(x.message||String(x),1)}};
+ $("s-d"+k).onclick=async()=>{if(!P[k])return msg("No card to download yet.",1);
+  try{await window.PS2save(P[k].name,P[k].r.u);msg("")}catch(x){if(x.code!=="declined")msg(x.message||String(x),1)}}}
+$("s-ab").onclick=()=>xfer("a","copy");$("s-ba").onclick=()=>xfer("b","copy");$("s-mab").onclick=()=>xfer("a","move");$("s-mba").onclick=()=>xfer("b","move");
+})();
+(()=>{
+const g=i=>document.getElementById(i),b=g("burger"),dr=g("dr"),ov=g("ov"),T={konversi:"Converter",baca:"Reader",salin:"Copy",kredit:"Credits"};
+const tog=o=>{b.classList.toggle("o",o);dr.classList.toggle("o",o);ov.classList.toggle("o",o);b.setAttribute("aria-expanded",o)};
+const show=()=>{const v=T[location.hash.slice(1)]?location.hash.slice(1):"konversi";
+ document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));
+ document.querySelectorAll("#dr a").forEach(a=>a.classList.toggle("on",a.dataset.v===v));g("ttl").textContent=T[v];tog(false)};
+b.onclick=()=>tog(!dr.classList.contains("o"));ov.onclick=()=>tog(false);
+try{localStorage.removeItem("ps2theme")}catch(e){}
+document.querySelectorAll(".drop").forEach(z=>{
+ ["dragenter","dragover"].forEach(v=>z.addEventListener(v,e=>{e.preventDefault();z.classList.add("hv")}));
+ ["dragleave","drop"].forEach(v=>z.addEventListener(v,()=>z.classList.remove("hv")));
+ z.addEventListener("drop",e=>{e.preventDefault();const i=z.querySelector("input");i.files=e.dataTransfer.files;i.dispatchEvent(new Event("change"))})});
+addEventListener("hashchange",show);show();
+})();
+</script></body></html>
