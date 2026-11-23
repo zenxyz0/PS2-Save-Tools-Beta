@@ -1,0 +1,30 @@
+name: Build EXE
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Salin index.html ke folder desktop
+        shell: bash
+        run: cp index.html desktop/index.html
+      - name: Install dan build
+        working-directory: desktop
+        shell: bash
+        run: |
+          npm install
+          npx electron-builder --win portable --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PS2-Save-Tools-exe
+          path: desktop/dist/PS2-Save-Tools.exe
+      - name: Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "exe-${{ github.run_number }}" desktop/dist/PS2-Save-Tools.exe --title "EXE ${{ github.run_number }}" --notes "Portable exe dari ${{ github.sha }}" --target ${{ github.sha }}
