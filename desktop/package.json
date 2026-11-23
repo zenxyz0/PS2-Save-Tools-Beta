@@ -1,0 +1,19 @@
+{
+  "name": "ps2-save-tools",
+  "version": "1.0.0",
+  "description": "PS2 Save Tools",
+  "main": "main.js",
+  "author": "zenxyz0",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.ps2.savetools",
+    "productName": "PS2 Save Tools",
+    "files": ["main.js", "index.html"],
+    "win": { "icon": "build/icon.ico", "target": "portable" },
+    "artifactName": "PS2-Save-Tools.exe"
+  }
+}
