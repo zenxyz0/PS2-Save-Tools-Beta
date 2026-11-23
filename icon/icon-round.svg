@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><circle cx="512" cy="512" r="512" fill="#1b2559"/>
+<path d="M276 190H640L778 328V834Q778 862 750 862H276Q248 862 248 834V218Q248 190 276 190Z" fill="#f3f1ea"/>
+<path d="M640 190L778 328H668Q640 328 640 300Z" fill="#c9c6b8"/>
+<rect x="318" y="246" width="40" height="86" rx="8" fill="#f2b632"/><rect x="382" y="246" width="40" height="86" rx="8" fill="#f2b632"/><rect x="446" y="246" width="40" height="86" rx="8" fill="#f2b632"/><rect x="510" y="246" width="40" height="86" rx="8" fill="#f2b632"/><rect x="574" y="246" width="40" height="86" rx="8" fill="#f2b632"/>
+<rect x="318" y="400" width="372" height="190" rx="22" fill="#27338a"/>
+<rect x="360" y="446" width="288" height="26" rx="13" fill="#f3f1ea"/>
+<rect x="360" y="496" width="196" height="26" rx="13" fill="#8c98e0"/>
+<circle cx="672" cy="728" r="134" fill="#14a34f" stroke="#f3f1ea" stroke-width="22"/>
+<path d="M672 664V776M624 732L672 780L720 732" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
