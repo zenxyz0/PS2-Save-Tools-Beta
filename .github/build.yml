@@ -1,0 +1,66 @@
+name: Build APK dan EXE
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 8.7 }
+      - name: Build APK
+        run: |
+          if [ -f ./gradlew ]; then chmod +x ./gradlew; ./gradlew assembleDebug --no-daemon; else gradle assembleDebug --no-daemon; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: app/build/outputs/apk/debug/*.apk
+
+  exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Salin index.html ke folder desktop
+        shell: bash
+        run: cp index.html desktop/index.html
+      - name: Build EXE
+        working-directory: desktop
+        shell: bash
+        run: |
+          npm install
+          npx electron-builder --win portable --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exe
+          path: desktop/dist/PS2-Save-Tools.exe
+
+  release:
+    needs: [apk, exe]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+      - name: Buat release berisi APK dan EXE
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "release-${{ github.run_number }}" out/apk/*.apk out/exe/*.exe \
+            --repo "${{ github.repository }}" \
+            --title "Build ${{ github.run_number }}" \
+            --notes "APK dan EXE dari ${{ github.sha }}" \
+            --target "${{ github.sha }}"
